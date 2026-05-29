@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-05-22T11:11:46.480178+00:00",
+  "source": {
+    "sample_path": "/Users/jezquerro/Documents/tfg/data/data_qc_gustos/sample_user_ids_gustos.parquet",
+    "characters_path": "/Users/jezquerro/Documents/tfg/data/data_raw/characters.csv",
+    "n_users_in_sample": 114412,
+    "n_chars_in_sample": 162895
+  },
+  "chars_level_p75": 11.0,
+  "chars_level_p50": 6.0,
+  "chars_level_p90": 15.0,
+  "notes": "p75 calculado sobre chars del sample de gustos (114,412 users del TFG). Usado por `pct_chars_high_level` en feature_pipeline_derived.py para mantener consistencia con el training del modelo gustos_nivel1."
+}

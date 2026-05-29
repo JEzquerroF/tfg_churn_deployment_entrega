@@ -1,0 +1,31 @@
+model_name: KMeans K=6 — Arquetipos identitarios
+version: v1_kmeans_k6_2026-05-12
+algorithm: KMeans
+n_clusters: 6
+tier: tier1
+training_sample: 114412 jugadores activos últimos 60 días
+master_version: v3_aggressive
+metrics:
+  silhouette: 0.353
+  davies_bouldin: 1.56
+distribution_typical:
+  0:
+    name: 🌱 Recién Llegado Explorador
+    pct: 6.5
+  1:
+    name: ⚔️ Jugador Establecido Activo
+    pct: 18.3
+  2:
+    name: 👑 Hardcore End-Game
+    pct: 5.2
+  3:
+    name: 🎯 Veterano Especializado
+    pct: 4.6
+  4:
+    name: 💤 Casual Dormido
+    pct: 58.8
+  5:
+    name: 🔧 Veterano Inversor
+    pct: 6.5
+trained_at: '2026-05-12'
+status: production

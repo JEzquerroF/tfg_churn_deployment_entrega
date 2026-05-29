@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Entornos y secretos
+.env
+.env.local
+
+# Outputs locales
+outputs/
+runs/
+backups/
+*.log
+
+# Datos del cliente (NUNCA versionar)
+inputs_cliente/
+data/uploads/
+data_raw/
+
+# Binarios servidos desde HF Hub. HF Spaces rechaza ficheros >10 MiB sin
+# LFS Y exige Xet storage para binarios (incluso pequeños). Se descargan
+# en runtime vía bootstrap_models.py. Mantener en local para desarrollo
+# y tests, pero fuera del git tracking.
+models/churn/v2_rf_L22_2026-05-19/model_7d.pkl
+models/churn/v2_rf_L22_2026-05-19/model_14d.pkl
+models/churn/v2_rf_L22_2026-05-19/model_30d.pkl
+models/gustos_nivel2/v1_hdbscan_2026-05-12/model.joblib
+models/gustos_nivel1/v1_kmeans_k6_2026-05-12/model.joblib
+data/pretrained_user_predictions.parquet
+
+# Sistema
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

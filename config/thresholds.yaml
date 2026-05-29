@@ -1,0 +1,42 @@
+# =============================================================================
+#  THRESHOLDS DE SEGMENTACIÓN DE RIESGO
+# =============================================================================
+
+risk_levels:
+  critical:    {min: 0.85, max: 1.00, label: "Crítico",  color: "#d32f2f"}
+  high:        {min: 0.65, max: 0.85, label: "Alto",     color: "#f57c00"}
+  medium:      {min: 0.40, max: 0.65, label: "Medio",    color: "#fbc02d"}
+  low:         {min: 0.20, max: 0.40, label: "Bajo",     color: "#689f38"}
+  very_low:    {min: 0.00, max: 0.20, label: "Mínimo",   color: "#388e3c"}
+
+priority_rules:
+  - if: {risk: critical, archetypes: [1, 2, 3, 5]}
+    priority: P0
+    label: "Acción inmediata"
+  - if: {risk: critical, archetypes: [4]}
+    priority: P3
+    label: "Re-engagement masivo (bajo coste)"
+  - if: {risk: high, archetypes: [1, 2, 3, 5]}
+    priority: P1
+    label: "Intervención focalizada"
+  - if: {risk: [critical, high], archetypes: [0]}
+    priority: P1
+    label: "Refuerzo onboarding"
+  - if: {risk: medium}
+    priority: P2
+    label: "Seguimiento preventivo"
+  - if: {risk: [low, very_low]}
+    priority: P4
+    label: "Monitorización pasiva"
+
+# === Drift detection (Fase 1.5) ===
+# Cuando la diferencia absoluta entre predicción OOF y live supera este
+# threshold, el sistema considera que los datos del jugador han cambiado
+# lo suficiente como para que la OOF ya no aplique, y sirve la live.
+# Configurable por el usuario en el frontend (D1b).
+drift_detection:
+  threshold: 0.10
+  rationale: >
+    0.10 coincide con la anchura típica entre niveles de riesgo definidos
+    arriba (cada nivel cubre ~0.20-0.25). Si la predicción cruza un nivel
+    de riesgo, sirve la live; si no, conserva la OOF.

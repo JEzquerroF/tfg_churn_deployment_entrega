@@ -1,0 +1,25 @@
+# =============================================================================
+#  CONFIGURACIÓN GENERAL DEL PIPELINE
+# =============================================================================
+
+behavior:
+  fail_on_schema_mismatch: true
+  use_oof_lookup: true
+  drop_users_without_features: true
+  verbose: true
+
+cleanup:
+  version: v1_conservative
+  high_nan_threshold: 0.95
+  quasi_constant_threshold: 0.95
+  correlation_threshold_high: 0.99
+  correlation_threshold_med: 0.95
+
+logging:
+  level: INFO
+  log_to_file: true
+  log_dir: outputs/logs
+
+performance:
+  chunk_size_rows: 100000
+  n_jobs: -1

@@ -1,0 +1,23 @@
+{
+  "feature_names": [
+    "currency_pct_inflow",
+    "currency_pct_outflow",
+    "currency_pct_top1_concept",
+    "currency_pct_gold",
+    "currency_pct_gems",
+    "currency_pct_dark_steel",
+    "fights_pct_pve",
+    "fights_pct_pvp",
+    "fights_pct_won",
+    "fights_pct_validated",
+    "currency_avg_quantity_per_tx",
+    "fights_avg_duration",
+    "currency_n_transactions_30d",
+    "currency_total_volume_30d",
+    "fights_total_30d",
+    "arena_total_combats_30d"
+  ],
+  "n_features": 16,
+  "extraction_method": "preprocessor.get_feature_names_out() o feature_names_in_",
+  "extracted_at": "2026-05-15T15:56:47.128771"
+}

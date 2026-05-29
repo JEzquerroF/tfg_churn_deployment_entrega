@@ -1,0 +1,41 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtualenvs locales (no se necesitan en el container)
+.venv/
+venv/
+env/
+
+# Outputs locales
+outputs/
+runs/
+backups/
+*.log
+
+# Datos del cliente
+inputs_cliente/
+data/uploads/
+data_raw/
+
+# Sistema
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Entornos
+.env
+.env.local
+.env.example
+
+# Docker
+Dockerfile
+.dockerignore

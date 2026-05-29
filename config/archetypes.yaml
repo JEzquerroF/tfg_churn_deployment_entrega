@@ -1,0 +1,353 @@
+# =============================================================================
+#  CATÁLOGO CANÓNICO: arquetipos N1 + 7 ejes de gusto + 12 contramedidas
+# =============================================================================
+#
+#  Source-of-truth del sistema de personalización (perfilado de gustos).
+#  Reemplaza al antiguo Nivel 2 (HDBSCAN de sub-arquetipos, no operacional).
+#
+#  Define:
+#    - `archetypes_n1`: los 6 arquetipos del Nivel 1 (KMeans K=6). Clave =
+#      cluster_id. `name` sin emojis (se usa en outputs).
+#    - `ejes_gusto`: los 7 ejes de perfilado con sus umbrales operacionales.
+#      Los 5 primeros son universales (100% de jugadores); los 2 últimos
+#      (pvp_perfil, perfil_oro) requieren has_tier2=1.
+#    - `contramedidas`: catálogo de 12 con id estable (CM01-CM12), label,
+#      mecánica y disparador.
+#    - `prioridad`: orden de prelación para resolver overlaps (primer match
+#      gana) + fallback final a CM04 → cobertura 100%.
+#
+#  Arquitectura estable-vs-intercambiable: este YAML es intercambiable. La
+#  lógica de los disparadores vive en pipeline/perfilado.py; el ORDEN de
+#  evaluación, los labels y el fallback se leen de aquí.
+#
+#  Umbrales numéricos persistidos en config/_tercile_thresholds.json
+#  (reproducibles en inferencia, calculados sobre el sample de training N=114.412).
+# =============================================================================
+
+meta:
+  version: "v1.1"
+  fecha_diseño: "2026-05-28"
+  sample_total: 114412
+  sample_tier2: 21599
+  changelog:
+    v1.1: >
+      Subido CM12 (reto_guiado_clase) por encima de los ejes de gusto: el
+      onboarding del Recién Llegado prima sobre rasgos genéricos (enhance,
+      colección, build). Añadido fallback final a CM04 (skin_clase) usando
+      la clase_favorita para los perfiles "activos sin distintivo" en
+      arquetipos no cubiertos. Cobertura: 100 %.
+    v1: "Catálogo inicial de 12 contramedidas con 0,69 % sin asignar (CM00)."
+  nota_nivel2: >
+    El sistema de gustos (7 ejes + 12 contramedidas) REEMPLAZA al Nivel 2
+    (HDBSCAN min_cluster_size=100), que nunca fue operacional en producción
+    (devolvía -1 a todos por falta de prediction_data en el entrenamiento).
+
+# =========================================================================
+# 6 arquetipos del Nivel 1 (KMeans K=6 sobre 78 features Tier 1)
+# =========================================================================
+archetypes_n1:
+  0:
+    code: 0
+    name: "Recién Llegado Explorador"
+    descripcion: "Cuenta nueva en fase de exploración inicial, que prueba muchas actividades distintas."
+    n_typical: 7492
+    pct_typical: 6.5
+    business_priority: alta
+    description: >
+      Jugador joven en el juego, todavía explorando mecánicas básicas.
+      Alta cobertura de datos Tier 2 (actividad reciente real).
+    business_rationale: >
+      Los recién llegados que churnean representan la mayor pérdida en CAC.
+      Mantener un porcentaje incluso pequeño aquí tiene ROI desproporcionado.
+
+  1:
+    code: 1
+    name: "Jugador Establecido Activo"
+    descripcion: "Combatiente regular que juega de forma constante, con builds enfocados en daño y mejora de equipo."
+    n_typical: 20931
+    pct_typical: 18.3
+    business_priority: alta
+    description: >
+      Jugador consolidado con actividad regular pero sin extremos.
+      Núcleo de la base activa.
+    business_rationale: >
+      Este segmento es el motor del LTV. Pérdidas aquí son costosas porque
+      son jugadores ya monetizando.
+
+  2:
+    code: 2
+    name: "Hardcore End-Game"
+    descripcion: "Jugador con progresión saturada y nivel máximo. Abandona por agotamiento de contenido, no por falta de interés."
+    n_typical: 5989
+    pct_typical: 5.2
+    business_priority: crítica
+    description: >
+      Jugador veterano con máxima profundidad de juego. Alto volumen de
+      personajes, compras frecuentes, dominio de mecánicas avanzadas.
+    business_rationale: >
+      Cluster con LTV más alto. Aunque pequeño en volumen (5%), contribuye
+      desproporcionadamente a revenue. Churn aquí = pérdida directa de ingresos.
+
+  3:
+    code: 3
+    name: "Veterano Especializado"
+    descripcion: "Perfil veterano centrado en una clase concreta, con un estilo de juego especializado."
+    n_typical: 5291
+    pct_typical: 4.6
+    business_priority: alta
+    description: >
+      Jugador veterano enfocado en una vertical específica del juego
+      (coleccionar, PvP, eventos). Menos universal que Hardcore.
+    business_rationale: >
+      Engagement profundo aunque acotado. Si la vertical se descuida, churnean.
+
+  4:
+    code: 4
+    name: "Casual Dormido"
+    descripcion: "Jugador de bajo engagement, sesiones esporádicas y poca progresión. Es el grupo más numeroso y el más propenso al abandono."
+    n_typical: 67308
+    pct_typical: 58.8
+    business_priority: baja
+    description: >
+      Cluster mainstream: jugadores con poca actividad reciente, posiblemente
+      ya semi-abandonados.
+    business_rationale: >
+      ROI individual bajo (probablemente ya están perdidos). Acciones masivas
+      de bajo coste y opcionales — no priorizar recursos humanos aquí.
+
+  5:
+    code: 5
+    name: "Veterano Inversor"
+    descripcion: "Perfil veterano con trayectoria larga, caracterizado por acumular recursos y por su patrón de gasto."
+    n_typical: 7401
+    pct_typical: 6.5
+    business_priority: alta
+    description: >
+      Jugador veterano que invierte tiempo y dinero, pero menos hardcore
+      que el cluster 2. Retenido por inversión acumulada.
+    business_rationale: >
+      Segmento estable y rentable. Sus churns suelen ser por causas externas
+      — intervenciones suaves son efectivas.
+
+# =========================================================================
+# 7 ejes de gusto
+#   - clase_favorita, estilo_build, monetizacion, perfil_enhance,
+#     perfil_coleccion: UNIVERSALES (100% de jugadores).
+#   - pvp_perfil, perfil_oro: requieren has_tier2=1 (actividad transaccional
+#     reciente). Para has_tier2=0 valen "null".
+# =========================================================================
+ejes_gusto:
+
+  clase_favorita:
+    fuente: "char_class_main (categórica)"
+    requiere_tier2: false
+    mapping:
+      0: "Caballero"
+      1: "Asesino"
+      2: "Campeón"
+      3: "Caballero"
+    nulo_a: "Caballero"
+
+  estilo_build:
+    fuente: "items_attack_defense_ratio (numérica)"
+    requiere_tier2: false
+    metodo: "terciles globales sobre el sample de training (persistidos)"
+    umbrales:
+      t33: 1.0370
+      t67: 1.1704
+    categorias:
+      tanque: "items_attack_defense_ratio <= t33"
+      equilibrado: "t33 < items_attack_defense_ratio < t67"
+      agresivo: "items_attack_defense_ratio >= t67"
+
+  monetizacion:
+    fuente: "iap_trial_only, iap_is_payer, reward_has_ad"
+    requiere_tier2: false
+    prelacion:
+      - condicion: "iap_trial_only == 1"
+        valor: "trial_no_convertido"
+      - condicion: "iap_is_payer == 1"
+        valor: "pagador"
+      - condicion: "reward_has_ad == 1"
+        valor: "no_pagador_ads"
+      - condicion: "default"
+        valor: "no_pagador"
+
+  perfil_enhance:
+    fuente: "items_max_enhance_level, pct_items_high_enhance"
+    requiere_tier2: false
+    metodo: "mediana del sample"
+    regla:
+      inversor: "items_max_enhance_level > 2 OR pct_items_high_enhance > 0"
+      no_inversor: "default"
+
+  perfil_coleccion:
+    fuente: "items_redundancy_ratio, coll_total_items"
+    requiere_tier2: false
+    umbrales:
+      coll_total_items_p75: 42.0
+    regla:
+      coleccionista: "items_redundancy_ratio > 1.5 OR coll_total_items > p75"
+      funcional: "default"
+
+  pvp_perfil:
+    fuente: "fights_pct_pvp, fights_pct_won"
+    requiere_tier2: true
+    regla:
+      pvp_frustrado: "fights_pct_pvp > 0.3 AND fights_pct_won < 0.3"
+      pve_focus: "default (en Tier 2)"
+      null: "has_tier2 == 0"
+
+  perfil_oro:
+    fuente: "currency_pct_inflow, currency_pct_outflow"
+    requiere_tier2: true
+    prelacion:
+      - condicion: "currency_pct_inflow > 0.85"
+        valor: "acumulador"
+      - condicion: "currency_pct_outflow > 0.25"
+        valor: "gastador"
+      - condicion: "default (Tier 2)"
+        valor: "neutro"
+      - condicion: "has_tier2 == 0"
+        valor: "null"
+
+# =========================================================================
+# Mapping de clase de personaje (char_class_main → clase_favorita)
+# =========================================================================
+clase_mapping:
+  0: "Caballero"
+  1: "Asesino"
+  2: "Campeón"
+  3: "Caballero"
+
+# =========================================================================
+# 12 contramedidas (catálogo estable con id numérico CM01-CM12)
+# =========================================================================
+contramedidas:
+
+  - id: CM01
+    label: "oferta_premium_clase"
+    descripcion: "Para Hardcore End-Game que ya pagan. Oferta premium de alto valor con contenido de su clase favorita."
+    prioridad: 2
+    mecanica: "Oferta premium con bundle de clase principal del jugador"
+    disparador: "arquetipo_n1 == 'Hardcore End-Game' AND monetizacion == 'pagador'"
+
+  - id: CM02
+    label: "oferta_premium_dirigida"
+    descripcion: "Para pagadores que no son Hardcore. Oferta premium adaptada a su arquetipo."
+    prioridad: 3
+    mecanica: "Oferta premium genérica adaptada al arquetipo"
+    disparador: "monetizacion == 'pagador' AND arquetipo_n1 != 'Hardcore End-Game'"
+
+  - id: CM03
+    label: "reconversion_trial"
+    descripcion: "Para jugadores que hicieron una compra de prueba pero no repitieron (trial no convertido). Oferta con descuento para recuperarlos como pagadores."
+    prioridad: 1
+    mecanica: "Bundle de reconversión + descuento single-tap antes del fin del trial"
+    disparador: "monetizacion == 'trial_no_convertido'"
+
+  - id: CM04
+    label: "skin_clase"
+    descripcion: "Para veteranos no pagadores (y asignación por defecto). Skin estética gratuita de su clase principal."
+    prioridad: 7
+    mecanica: "Skin estética gratis para la clase principal"
+    disparador: >
+      arquetipo_n1 in {'Veterano Inversor', 'Veterano Especializado'}
+      AND monetizacion != 'pagador'
+    disparador_fallback: >
+      Cualquier jugador sin match en las reglas anteriores recibe CM04
+      usando su clase_favorita. Garantiza cobertura 100 %.
+
+  - id: CM05
+    label: "evento_enhance"
+    descripcion: "Para jugadores que invierten en mejorar su equipo (enhance). Evento con más materiales o descuento en el coste de mejora."
+    prioridad: 9
+    mecanica: "Evento temporal con drop boost o reducción de coste de enhance"
+    disparador: "perfil_enhance == 'inversor'"
+
+  - id: CM06
+    label: "reto_coleccion"
+    descripcion: "Para coleccionistas. Reto temporal de completar un set con una recompensa exclusiva."
+    prioridad: 8
+    mecanica: "Reto temporal de completar set + recompensa única de inventario"
+    disparador: >
+      perfil_coleccion == 'coleccionista'
+      AND arquetipo_n1 in {'Jugador Establecido Activo',
+                           'Veterano Especializado', 'Veterano Inversor'}
+
+  - id: CM07
+    label: "drop_build"
+    descripcion: "Para jugadores con un estilo de build definido (agresivo o tanque). Boost de drop de ítems alineados con su forma de jugar."
+    prioridad: 10
+    mecanica: "Drop boost de ítems específicos del estilo de build (crítico / defensa)"
+    disparador: >
+      estilo_build in {'agresivo', 'tanque'}
+      AND arquetipo_n1 in {'Jugador Establecido Activo', 'Hardcore End-Game'}
+
+  - id: CM08
+    label: "recompensa_ad"
+    descripcion: "Para no pagadores que toleran anuncios. Aumento temporal de la recompensa por ver anuncios."
+    prioridad: 11
+    mecanica: "Aumento temporal del % de moneda por ver ad"
+    disparador: "monetizacion == 'no_pagador_ads'"
+
+  - id: CM09
+    label: "regalo_moneda"
+    descripcion: "Para Casual Dormido no pagador. Pequeño regalo de moneda en el login para reactivar la sesión."
+    prioridad: 12
+    mecanica: "Regalo de moneda secundaria (gems) en login para reactivar"
+    disparador: "arquetipo_n1 == 'Casual Dormido' AND monetizacion == 'no_pagador'"
+
+  - id: CM10
+    label: "oferta_conversion_oro"
+    descripcion: "Para jugadores que acumulan oro sin gastarlo. Oferta limitada para convertir ese ahorro en gemas o cosméticos."
+    prioridad: 4
+    mecanica: "Bundle limitado para convertir oro acumulado en gems o cosmético"
+    disparador: "has_tier2 == 1 AND perfil_oro == 'acumulador'"
+
+  - id: CM11
+    label: "ajuste_pvp"
+    descripcion: "Para jugadores de PvP en mala racha (frustrados). Ajuste temporal del emparejamiento más un bonus para cortar la frustración."
+    prioridad: 5
+    mecanica: "Aplicar matchmaking forzado a categoría inferior + bonus motivacional"
+    disparador: "has_tier2 == 1 AND pvp_perfil == 'pvp_frustrado'"
+
+  - id: CM12
+    label: "reto_guiado_clase"
+    descripcion: "Para recién llegados. Misión guiada de 7 días adaptada a su clase para apoyar la fase inicial."
+    prioridad: 6
+    mecanica: "Misión guiada de 7 días con hitos adaptados a la clase principal"
+    disparador: "arquetipo_n1 == 'Recién Llegado Explorador'"
+
+# =========================================================================
+# Orden de prioridad (resolución de overlap → primer match gana)
+# =========================================================================
+prioridad:
+  filosofia: >
+    De más a menos específico:
+      1. Monetización aguda (trial, pagador)              [CM03, CM01, CM02]
+      2. Refinamiento Tier 2                              [CM10, CM11]
+      3. Onboarding del nuevo                             [CM12]
+      4. Gusto específico (skin, coleccion, enhance, build) [CM04, CM06, CM05, CM07]
+      5. Genérica por arquetipo                           [CM08, CM09]
+      6. Fallback (CM04 con clase_favorita)               → cobertura 100 %
+  orden:
+    - CM03   # reconversion_trial
+    - CM01   # oferta_premium_clase
+    - CM02   # oferta_premium_dirigida
+    - CM10   # oferta_conversion_oro
+    - CM11   # ajuste_pvp
+    - CM12   # reto_guiado_clase
+    - CM04   # skin_clase
+    - CM06   # reto_coleccion
+    - CM05   # evento_enhance
+    - CM07   # drop_build
+    - CM08   # recompensa_ad
+    - CM09   # regalo_moneda
+  fallback_final:
+    contramedida: CM04
+    politica: >
+      Tras evaluar las 12 reglas en orden, los jugadores sin match reciben
+      CM04 (skin_clase) usando su clase_favorita. La skin es la oferta más
+      agnóstica del catálogo (no requiere arquetipo activo, Tier 2 ni gusto
+      declarado).

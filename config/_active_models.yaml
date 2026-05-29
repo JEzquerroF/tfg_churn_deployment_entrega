@@ -1,0 +1,56 @@
+# =============================================================================
+#  MODELOS ACTIVOS DEL DEPLOYMENT
+# =============================================================================
+#
+#  Este fichero es el ÚNICO punto de cambio para swappear modelos. Para
+#  cambiar de modelo:
+#
+#    1. Crear nueva carpeta versionada en models/churn/v<N>_<algo>_<fecha>/
+#    2. Copiar artefactos del nuevo modelo + feature_list.json + metadata.yaml
+#       + (opcional) target_encoder_mappings.json + preprocessor.joblib
+#    3. Cambiar `churn.active_version` y `churn.path` aquí
+#
+#  No se toca código.
+# =============================================================================
+
+churn:
+  active_version: v2_rf_L22_2026-05-19
+  path: models/churn/v2_rf_L22_2026-05-19
+  status: production
+  algorithm: random_forest
+  format: sklearn_pkl_dict
+  targets:
+    - churn_7d
+    - churn_14d
+    - churn_30d
+  notes: >
+    Random Forest L22 v1 (modelo final del TFG, 2026-05-19). 3 targets
+    soportados. Sin calibrador (RF está naturalmente bien calibrado, diff
+    real vs predicho <0.6pp). Las 4 cat_cols (country, has_user_rated_app,
+    user_store_where_published, device_primary_platform) se aplican vía
+    target_encoder_mappings.json (reconstruido del training del TFG con
+    seed=42, smoothing=10). Reemplaza al placeholder CB L32 v3.
+
+gustos_nivel1:
+  active_version: v1_kmeans_k6_2026-05-12
+  path: models/gustos_nivel1/v1_kmeans_k6_2026-05-12
+  algorithm: kmeans
+  n_clusters: 6
+  status: production
+
+# El antiguo gustos_nivel2 (HDBSCAN de sub-arquetipos) se eliminó: nunca fue
+# operacional (devolvía -1 a todos por falta de prediction_data). La capa de
+# personalización ahora es el perfilado de gustos (pipeline/perfilado.py),
+# cuyo catálogo vive en config/archetypes.yaml.
+
+# Lookup OOF: jugadores que estaban en el sample de entrenamiento original.
+# Para ellos servimos predicciones OOF pre-calculadas en vez de re-predecir
+# (evita over-optimism por leakage en data ya vista por el modelo).
+oof_lookup:
+  enabled: true
+  path: data/pretrained_user_predictions.parquet
+  n_users_expected: 33598
+  targets:
+    - churn_7d
+    - churn_14d
+    - churn_30d

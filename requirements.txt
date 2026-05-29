@@ -1,0 +1,34 @@
+# Core
+pandas>=2.0.0
+numpy>=1.24.0
+pyarrow>=14.0.0
+pyyaml>=6.0.1
+
+# ML — modelos del TFG
+catboost>=1.2.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+hdbscan>=0.8.33
+
+# CLI
+click>=8.1.0
+rich>=13.7.0
+
+# Fase F.1 — Streamlit UI
+streamlit>=1.30.0
+plotly>=5.18.0
+
+# Fase F.2 — Informes PDF + Excel
+weasyprint>=60.0
+jinja2>=3.1.0
+matplotlib>=3.8.0
+openpyxl>=3.1.0
+
+# Fase F.3 — Deploy en HF Spaces (modelos pesados servidos desde HF Hub)
+huggingface_hub>=0.20.0
+
+# === Fases siguientes (comentadas hasta su fase) ===
+
+# Fase D3 — LLM
+# anthropic>=0.18.0
+# openai>=1.10.0

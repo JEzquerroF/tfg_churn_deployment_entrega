@@ -1,0 +1,31 @@
+{
+  "estilo_build": {
+    "feature": "items_attack_defense_ratio",
+    "t33": 1.0369783412572637,
+    "t67": 1.1703931334110416,
+    "method": "terciles globales sobre el sample de gustos del training (N=114.412)"
+  },
+  "perfil_coleccion": {
+    "feature": "coll_total_items",
+    "p75": 42.0,
+    "method": "percentil 75 global sobre el sample de gustos del training"
+  },
+  "perfil_enhance": {
+    "rule": "items_max_enhance_level > 2 OR pct_items_high_enhance > 0",
+    "rationale": "items_max_enhance_level mediana = 2; pct_items_high_enhance mediana = 0"
+  },
+  "monetizacion": {
+    "prelacion": [
+      "trial_no_convertido",
+      "pagador",
+      "no_pagador_ads",
+      "no_pagador"
+    ]
+  },
+  "pvp_perfil": {
+    "rule": "pvp_frustrado si fights_pct_pvp > 0.3 AND fights_pct_won < 0.3 (con has_tier2=1); pve_focus en el resto del Tier 2; null si has_tier2=0"
+  },
+  "perfil_oro": {
+    "rule": "acumulador si currency_pct_inflow > 0.85; gastador si currency_pct_outflow > 0.25; neutro en el resto; null si has_tier2=0"
+  }
+}

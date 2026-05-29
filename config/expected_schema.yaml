@@ -1,0 +1,297 @@
+# =============================================================================
+#  SCHEMA ESPERADO DE LOS CSVs DEL CLIENTE
+# =============================================================================
+#
+#  Auto-identificación por columnas (Jaccard similarity), no por nombre de
+#  fichero. Las columnas declaradas aquí han sido verificadas leyendo los
+#  headers reales de /Users/jezquerro/Documents/tfg/data/data_raw/ con
+#  csv.reader. CERO INVENCIÓN: todas las cols listadas existen en el CSV real.
+#
+#  Criterio para required_columns:
+#    - "Required" = el feature_pipeline_*.py accede a esa col SIN GUARD
+#      (sin `if col in df.columns` previo), por lo que su ausencia hace
+#      que el pipeline pete.
+#    - Excepción documentada: `users`. El pipeline tiene todos los accesos
+#      guarded con fallback a NaT/NaN, pero declarar required vacío permitiría
+#      al cliente subir un users.csv inservible. Por eso required en users
+#      lista las 3 cols críticas para el output funcional (identificación +
+#      fechas base del cutoff).
+#
+#  Criterio para optional_columns:
+#    - Cols que existen en el CSV real y el pipeline accede CON guard, o
+#    - Cols presentes en el CSV pero que el pipeline no usa (pass-through
+#      informativo, útil para auditoría).
+#
+#  Criterio para date_columns:
+#    - string plano: col en formato ISO date string (parseado con utc=True).
+#    - dict {name: X, format: unix_ts}: col es unix timestamp en segundos.
+# =============================================================================
+
+identification:
+  min_match_score: 0.75
+  warn_below: 0.85
+
+schemas:
+
+  users:
+    # required: 3 cols críticas para el output (todos los accesos del pipeline
+    # están guarded, pero sin estas las features de users son inservibles).
+    required_columns:
+      - _id
+      - created_at
+      - last_login_date
+    optional_columns:
+      - own_id
+      - num_logins
+      - total_time_played
+      - session_mean_time
+      - game_version
+      - tutorial_done
+      - last_completed_tutorial_block
+      - show_arena_announcer
+      - show_new_arena_announcer
+      - show_village_announcer
+      - show_talents_announcer
+      - show_quests_announcer
+      - show_tower_event_announcer
+      - current_session
+      - country
+      - has_user_rated_app
+      - language
+      - focus
+      - gold
+      - gems
+      - dark_steel
+      - updated_at
+      - current_character
+      - is_google_play
+      - runes
+      - store_where_published
+      - template_item_stats_augment_update_done
+    date_columns:
+      - created_at
+      - updated_at
+      - {name: last_login_date, format: unix_ts}
+    primary_key: _id
+    role: master_users
+
+  characters:
+    required_columns:
+      - user_id
+      - class
+      - level
+      - experience
+      - arena_category
+      - medals
+      - created_at
+      - updated_at
+    optional_columns:
+      - _id
+      - is_npc
+      - character_name
+      - slimChin
+      - eyeColor
+      - raceTrianglePos
+      - hairTrianglePos
+      - hairWhitePos
+      - wrinkles
+      - rHandEqObj
+      - lHandEqObj
+      - helmEqObj
+      - chestEqObj
+      - handsEqObj
+      - legsEqObj
+      - hairIcon
+      - beardIcon
+      - eyebrowsIcon
+      - faceScarIcon
+      - facePaintIcon
+      - torsoScarIcon
+      - torsoPaintIcon
+      - total_talent_points
+      - available_talent_points
+      - spent_talent_points
+      - ai_aggressivity
+      - ai_parry
+      - ai_intelligence
+      - pve_energy
+      - time_when_energy_is_full
+      - mana
+      - time_when_mana_is_full
+      - name_visible
+      - name_plain
+      - is_customized
+      - c_attack_multiplier_talents
+      - c_critical_chance_increment_talents
+      - c_defense_multiplier_talents
+      - c_total_attack
+      - c_total_attack_defense_sum
+      - c_total_critical_chance
+      - c_total_defense
+      - current_equipment_set
+    date_columns:
+      - created_at
+      - updated_at
+    primary_key: _id
+    foreign_key: user_id
+
+  devices:
+    required_columns:
+      - user_id
+      - platform
+      - device_model
+      - created_at
+      - updated_at
+    optional_columns:
+      - _id
+    date_columns:
+      - created_at
+      - updated_at
+    foreign_key: user_id
+
+  iaps_consumables:
+    # processed_consumables_iaps.csv
+    required_columns:
+      - user_id
+      - product_id
+      - purchase_time
+    optional_columns:
+      - _id
+      - transaction_id
+      - platform
+      - store
+      - purchase_state
+      - purchase_token
+      - reviewed
+      - given
+      - updated_at
+      - created_at
+    date_columns:
+      - {name: purchase_time, format: unix_ts}
+      - updated_at
+      - created_at
+    foreign_key: user_id
+
+  iaps_subscriptions:
+    # processed_subscriptions_iaps.csv
+    required_columns:
+      - user_id
+      - product_id
+      - purchase_time
+      - end_date
+    optional_columns:
+      - _id
+      - transaction_id
+      - platform
+      - store
+      - is_trial
+      - purchase_token
+      - payment_state
+      - registry_updates
+      - status
+      - updated_at
+      - created_at
+    date_columns:
+      - {name: purchase_time, format: unix_ts}
+      - {name: end_date, format: unix_ts}
+      - updated_at
+      - created_at
+    foreign_key: user_id
+
+  daily_rewards:
+    # user_daily_rewards.csv — 1 fila por user con estado del reward set.
+    required_columns:
+      - user_id
+      - created_at
+      - set
+      - current_day
+      - sets_completed
+      - last_claimed_reward_day
+      - last_claimed_reward_time
+      - last_claimed_premium_reward_day
+      - last_claimed_ad_reward_day
+    optional_columns:
+      - _id
+      - updated_at
+    date_columns:
+      - created_at
+      - updated_at
+      - {name: last_claimed_reward_time, format: unix_ts}
+    foreign_key: user_id
+
+  user_items:
+    # user_items.csv — lectura con usecols, todas son strictly required.
+    required_columns:
+      - user_id
+      - item_definition_excel_id
+      - c_base_critical_chance
+      - c_base_attack_enhanced
+      - c_base_defense_enhanced
+      - enhance_level
+      - tempering_level
+      - max_enhance_level
+      - updated_at
+      - created_at
+    optional_columns:
+      - _id
+    date_columns:
+      - created_at
+      - updated_at
+    foreign_key: user_id
+
+  user_items_collection:
+    # user_items_collection.csv — lectura con usecols, todas required.
+    required_columns:
+      - user_id
+      - item_definition_excel_id
+      - updated_at
+      - created_at
+    optional_columns:
+      - _id
+    date_columns:
+      - created_at
+      - updated_at
+    foreign_key: user_id
+
+  support_feedback:
+    # support_user_feedback_by_type.csv
+    required_columns:
+      - user_id
+      - feedback_type
+      - created_at
+    optional_columns:
+      - _id
+      - game_version
+      - platform
+      - state
+      - updated_at
+    date_columns:
+      - created_at
+      - updated_at
+    foreign_key: user_id
+
+# CSVs presentes en data_raw/ del TFG que NO se usan en el pipeline.
+# La validación los ignora silenciosamente si aparecen en el directorio del cliente.
+ignored_schemas:
+  - ads_free_user
+  - arena_global_ranking
+  - arena_log
+  - arena_tournaments_v2
+  - currency_transactions
+  - fights_log
+  - subscriptions_iap   # dim table de productos (507 bytes); NO confundir con iaps_subscriptions
+  - user_options
+  - user_village_buildings
+  - village_buildings
+
+fallback:
+  on_missing_required_csv:
+    users: fail              # sin users no se puede nada
+    characters: fail         # necesario para features de personajes
+    devices: warn
+    iaps_consumables: warn
+    iaps_subscriptions: warn
+    daily_rewards: warn
+    user_items: warn
+    user_items_collection: warn
+    support_feedback: warn

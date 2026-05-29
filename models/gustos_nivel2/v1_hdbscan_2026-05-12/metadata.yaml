@@ -1,0 +1,17 @@
+model_name: HDBSCAN min_samples=100 — Sub-arquetipos actividad reciente
+version: v1_hdbscan_2026-05-12
+algorithm: HDBSCAN
+min_samples: 100
+tier: tier2
+training_sample: 21599 jugadores con datos Tier 2
+master_version: v3_aggressive
+metrics:
+  silhouette: 0.301
+  pct_outliers: 50.7
+n_sub_clusters: 5
+outlier_label: -1
+supports_approximate_predict: false
+trained_at: '2026-05-12'
+status: production
+warnings: Modelo entrenado SIN `prediction_data=True`. Asignación de nuevos puntos
+  devolverá -1 (outlier) para todos. Recomendado re-entrenar con prediction_data=True.

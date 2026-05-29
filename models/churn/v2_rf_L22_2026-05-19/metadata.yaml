@@ -1,0 +1,64 @@
+model_name: Random Forest L22 v1 (TFG final)
+version: v2_rf_L22_2026-05-19
+algorithm: RandomForest
+format: sklearn_pkl_dict
+sample_config:
+  label: L22
+  cutoff: 90
+  spike: 7
+  min_logins: 2
+  n_users: 33598
+cleanup_version: v1_conservative
+n_features: 62
+n_cat_cols: 4
+cat_cols:
+- country
+- has_user_rated_app
+- user_store_where_published
+- device_primary_platform
+best_params:
+  n_estimators: 248
+  max_depth: 12
+  min_samples_split: 11
+  min_samples_leaf: 3
+  max_features: 0.5
+  class_weight: null
+targets:
+  churn_7d:
+    auc_test: 0.9254084500198285
+    auc_val: 0.9626478386826451
+    auc_oof: 0.9278897762839614
+    brier_test: 0.091827190683569
+    calibration: null
+    n_train: 23531
+    n_val: 5027
+    n_test: 5040
+  churn_14d:
+    auc_test: 0.9057482020234597
+    auc_val: 0.9451443176507983
+    auc_oof: 0.8939215656101204
+    brier_test: 0.11293375830855774
+    calibration: null
+    n_train: 23531
+    n_val: 5027
+    n_test: 5040
+  churn_30d:
+    auc_test: 0.8542902208201892
+    auc_val: 0.8949320547549465
+    auc_oof: 0.8407293710681135
+    brier_test: 0.14898955004712477
+    calibration: null
+    n_train: 23531
+    n_val: 5027
+    n_test: 5040
+target_encoding:
+  method: manual smoothed mean (replicado del TFG)
+  smoothing: 10.0
+  missing_sentinel: __missing__
+  mappings_file: target_encoder_mappings.json
+  seed_for_split: 42
+trained_at: '2026-05-19'
+status: production
+notes: Modelo final del TFG. Reemplaza al placeholder CatBoost L32 v3. No requiere
+  calibración isotonic — RF está naturalmente bien calibrado (Brier test ~0.09 en
+  los 3 targets).
